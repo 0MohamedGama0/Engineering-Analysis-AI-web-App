@@ -2,15 +2,14 @@ import streamlit as st
 import requests
 import json
 from PIL import Image
-import io
-import base64
+import random
+import time
 
 # Set page configuration
 st.set_page_config(
     page_title="Engineering Analysis AI",
     page_icon="🔧",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
 
 # Custom CSS
@@ -24,19 +23,6 @@ st.markdown("""
         font-size: 4rem;
         margin-bottom: 1rem;
     }
-    .upload-area {
-        border: 3px dashed #667eea;
-        border-radius: 10px;
-        padding: 3rem;
-        text-align: center;
-        margin: 2rem 0;
-        background: #f8f9ff;
-        transition: all 0.3s ease;
-    }
-    .upload-area:hover {
-        border-color: #764ba2;
-        background: #f0f2ff;
-    }
     .analysis-result {
         background: #f8f9ff;
         border-left: 5px solid #667eea;
@@ -45,27 +31,21 @@ st.markdown("""
         margin-top: 2rem;
         box-shadow: 0 5px 15px rgba(0,0,0,0.08);
     }
-    .success-message {
-        background: #d4edda;
-        color: #155724;
+    .demo-notice {
+        background: #fff3cd;
+        color: #856404;
         padding: 1rem;
         border-radius: 6px;
         margin: 1rem 0;
-        text-align: center;
+        border-left: 4px solid #ffc107;
     }
     .stButton>button {
-        width: 100%;
         background: linear-gradient(135deg, #667eea, #764ba2);
         color: white;
         border: none;
-        padding: 1rem;
+        padding: 0.75rem 2rem;
         border-radius: 8px;
-        font-size: 1.1rem;
         font-weight: 600;
-    }
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -74,41 +54,142 @@ st.markdown("""
 st.markdown('<div class="logo">🔧</div>', unsafe_allow_html=True)
 st.markdown('<div class="main-header"><h1>Engineering Analysis AI</h1><p>Upload your design and get expert technical analysis</p></div>', unsafe_allow_html=True)
 
-# Initialize session state
-if 'image_uploaded' not in st.session_state:
-    st.session_state.image_uploaded = False
-if 'analysis_result' not in st.session_state:
-    st.session_state.analysis_result = None
-if 'image_data' not in st.session_state:
-    st.session_state.image_data = None
+# Demo notice
+st.markdown("""
+<div class="demo-notice">
+⚠️ <strong>DEMO MODE</strong> - This is a demonstration version. For full functionality with Ollama AI, run the local HTML version.
+</div>
+""", unsafe_allow_html=True)
 
-# Sidebar for Ollama configuration
-with st.sidebar:
-    st.header("⚙️ Configuration")
-    ollama_url = st.text_input(
-        "Ollama Server URL",
-        value="http://localhost:11434",
-        help="URL of your Ollama server. For local setup, use http://localhost:11434"
-    )
-    model_name = st.text_input(
-        "Model Name",
-        value="tinyllama:latest",
-        help="Name of the Ollama model to use"
-    )
+# Mock AI responses based on domain
+def get_mock_analysis(domain, description):
+    mock_responses = {
+        "robotics": f"""
+🔧 TECHNICAL SPECIFICATIONS (Mock Analysis):
+- Based on your description: "{description[:100]}..."
+- Mechanism: Robotic arm with multiple degrees of freedom
+- Components: Servo motors, aluminum frame, gripper mechanism
+- Control: Microcontroller-based system with position feedback
+- Power: 12V DC supply with current regulation
+
+⚙️ DESIGN CONSIDERATIONS:
+- Applications: Pick-and-place operations, assembly automation
+- Strengths: Good range of motion, modular design
+- Improvements: Add cable management, implement force sensing
+- Safety: Include emergency stop and limit switches
+
+📈 RECOMMENDATIONS:
+1. Implement ROS (Robot Operating System) for advanced control
+2. Add vision system for object recognition
+3. Consider harmonic drives for smoother motion
+4. Implement collision detection algorithms
+""",
+        
+        "product": f"""
+🎯 PRODUCT ANALYSIS (Mock Analysis):
+- Based on: "{description[:100]}..."
+- Function: Ergonomic tool/product design
+- Target Users: Professionals and hobbyists
+- Key Features: Comfortable grip, lightweight, durable materials
+
+🏭 MANUFACTURING & COST:
+- Materials: ABS plastic with rubberized coating
+- Processes: Injection molding with overmolding
+- Assembly: Minimal parts for easy manufacturing
+- Cost Estimate: $15-25 per unit at scale
+
+💡 DESIGN IMPROVEMENTS:
+1. Add textured surface for better grip
+2. Consider biodegradable materials
+3. Implement modular design for customization
+4. Add smart features (IoT connectivity)
+""",
+        
+        "cad": f"""
+📐 CAD ANALYSIS (Mock Analysis):
+- Design: "{description[:100]}..."
+- Complexity: Moderate with organic curves
+- Features: Parametric design with assembly constraints
+- Manufacturing: Suitable for 3D printing and CNC
+
+🛠️ ENGINEERING RECOMMENDATIONS:
+- Add fillets to reduce stress concentrations
+- Implement proper draft angles for molding
+- Consider thermal expansion in tolerances
+- Optimize wall thickness for strength/weight
+
+🔧 PROTOTYPING PLAN:
+1. 3D print functional prototype
+2. Conduct stress analysis simulation
+3. Test with real-world loads
+4. Iterate based on feedback
+""",
+        
+        "mechanism": f"""
+⚙️ MECHANICAL ANALYSIS (Mock Analysis):
+- Mechanism: "{description[:100]}..."
+- Type: Linkage system with multiple joints
+- Motion: Rotary to linear conversion
+- Efficiency: Estimated 85-90%
+
+🔧 PERFORMANCE ANALYSIS:
+- Load Capacity: Medium (10-50kg range)
+- Wear Points: Joint bearings, sliding surfaces
+- Maintenance: Regular lubrication needed
+- Lifetime: 5+ years with proper care
+
+🚀 OPTIMIZATION SUGGESTIONS:
+1. Replace bushings with ball bearings
+2. Add position feedback sensors
+3. Implement self-lubricating materials
+4. Consider alternative mechanism geometries
+""",
+        
+        "electronics": f"""
+🔌 ELECTRONICS ANALYSIS (Mock Analysis):
+- Circuit: "{description[:100]}..."
+- Components: Microcontroller, sensors, power regulation
+- Power: 5V/3.3V mixed voltage system
+- Communication: I2C/SPI/UART interfaces
+
+⚡ DESIGN CONSIDERATIONS:
+- PCB Layout: 2-layer with ground plane
+- Thermal: Add heatsinks for power components
+- EMI: Implement proper filtering and shielding
+- Testing: In-circuit testing points recommended
+
+💡 IMPROVEMENTS:
+1. Add overvoltage/overcurrent protection
+2. Implement sleep modes for power saving
+3. Use surface mount for miniaturization
+4. Add debugging interfaces (JTAG/SWD)
+""",
+        
+        "other": f"""
+🔍 ENGINEERING ANALYSIS (Mock Analysis):
+- Design: "{description[:100]}..."
+- Purpose: {description[:50]}...
+- Principles: Mechanical/electrical integration
+- Innovation: Novel approach to problem solving
+
+💡 TECHNICAL ASSESSMENT:
+- Functionality: Meets basic requirements
+- Innovation: Shows creative engineering
+- Feasibility: Technically achievable
+- Market Potential: Niche application
+
+🚀 DEVELOPMENT PATH:
+1. Build proof-of-concept prototype
+2. Conduct user testing
+3. Refine design based on feedback
+4. Plan for manufacturing at scale
+"""
+    }
     
-    st.markdown("---")
-    st.markdown("### 📖 Instructions")
-    st.markdown("""
-    1. Make sure Ollama is running locally
-    2. Pull the model: `ollama pull tinyllama:latest`
-    3. Run Ollama server
-    4. Upload your design image
-    5. Select domain and describe your design
-    6. Click 'Analyze Design'
-    """)
+    return mock_responses.get(domain, "Analysis not available for this domain.")
 
-# Main content
-col1, col2 = st.columns(2)
+# Main layout
+col1, col2 = st.columns([1, 1])
 
 with col1:
     st.subheader("📁 Upload Your Design")
@@ -117,19 +198,16 @@ with col1:
     uploaded_file = st.file_uploader(
         "Choose an image file",
         type=['jpg', 'jpeg', 'png', 'gif'],
-        label_visibility="collapsed"
+        help="Upload CAD models, robotics, mechanisms, products, etc."
     )
     
     if uploaded_file is not None:
-        # Display image
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Design", use_column_width=True)
-        
-        # Store image data
-        st.session_state.image_uploaded = True
-        st.session_state.image_data = uploaded_file.getvalue()
-        
-        st.markdown('<div class="success-message">✅ Image uploaded successfully!</div>', unsafe_allow_html=True)
+        try:
+            image = Image.open(uploaded_file)
+            st.image(image, caption="Uploaded Design", use_column_width=True)
+            st.success("✅ Image uploaded successfully!")
+        except:
+            st.warning("📄 File uploaded (preview not available in demo mode)")
 
 with col2:
     st.subheader("🎯 Analysis Settings")
@@ -137,9 +215,8 @@ with col2:
     # Domain selection
     domain = st.selectbox(
         "🏷️ What type of design is this?",
-        options=["", "robotics", "product", "cad", "mechanism", "electronics", "other"],
+        options=["robotics", "product", "cad", "mechanism", "electronics", "other"],
         format_func=lambda x: {
-            "": "-- Select the domain --",
             "robotics": "🤖 Robotics / Mechanical Systems",
             "product": "📱 Product Design",
             "cad": "💻 CAD Model / 3D Design",
@@ -153,188 +230,70 @@ with col2:
     description = st.text_area(
         "📝 Describe what you see in the image:",
         height=150,
-        placeholder="Example: 'This is a 4-degree-of-freedom robotic arm with servo motors, aluminum frame, and a gripper mechanism. The joints appear to use rotary actuators...'",
-        help="Be specific about: Components, materials, mechanisms, intended function"
+        placeholder="Example: 'This is a 4-degree-of-freedom robotic arm with servo motors, aluminum frame, and a gripper mechanism...'",
+        help="Be specific about components, materials, mechanisms, and intended function"
     )
 
 # Analysis button
-if st.button("🚀 Analyze Design", type="primary"):
-    if not st.session_state.image_uploaded:
-        st.error("⚠️ Please upload an image first!")
-    elif not domain:
-        st.error("⚠️ Please select a domain!")
-    elif not description.strip():
+if st.button("🚀 Analyze Design", type="primary", use_container_width=True):
+    if not description.strip():
         st.error("⚠️ Please describe your design!")
     else:
-        with st.spinner("🤖 AI is analyzing your design... This may take a few seconds"):
-            try:
-                # Domain-specific prompts
-                domain_prompts = {
-                    "robotics": f"""You are a robotics engineering expert. Analyze this robotic system: "{description}"
-
-Provide a comprehensive technical analysis:
-
-🔧 TECHNICAL SPECIFICATIONS:
-- Mechanism type and degrees of freedom
-- Key components and their functions
-- Actuation methods and power requirements
-- Control system architecture
-- Performance capabilities
-
-⚙️ DESIGN CONSIDERATIONS:
-- Potential applications and use cases
-- Strengths and limitations
-- Suggested improvements
-- Safety considerations
-- Integration possibilities""",
-
-                    "product": f"""You are a product design expert. Analyze this product design: "{description}"
-
-Provide a comprehensive design analysis:
-
-🎯 PRODUCT ANALYSIS:
-- Intended function and target users
-- Key features and differentiators
-- Ergonomics and user experience
-- Aesthetic considerations
-- Market positioning
-
-🏭 MANUFACTURING & COST:
-- Suitable materials and processes
-- Manufacturing complexity
-- Cost optimization opportunities
-- Assembly considerations
-- Sustainability aspects""",
-
-                    "cad": f"""You are a CAD and mechanical design expert. Analyze this 3D model: "{description}"
-
-Provide a comprehensive CAD analysis:
-
-📐 DESIGN EVALUATION:
-- Geometric complexity and features
-- Functional requirements fulfillment
-- Design for manufacturability
-- Tolerance and fit considerations
-- Potential stress points
-
-🛠️ ENGINEERING RECOMMENDATIONS:
-- Suggested design improvements
-- Material selection guidance
-- Manufacturing process recommendations
-- Prototyping considerations
-- Testing and validation approach""",
-
-                    "mechanism": f"""You are a mechanical engineering expert. Analyze this mechanism: "{description}"
-
-Provide a comprehensive mechanical analysis:
-
-⚙️ MECHANICAL ANALYSIS:
-- Type of mechanism and principle of operation
-- Kinematic chain and mobility
-- Force transmission and efficiency
-- Component interactions
-- Motion characteristics
-
-🔧 PERFORMANCE & OPTIMIZATION:
-- Potential failure points
-- Wear and maintenance considerations
-- Efficiency improvements
-- Alternative mechanism options
-- Load capacity and limitations""",
-
-                    "electronics": f"""You are an electronics engineering expert. Analyze this electronic design: "{description}"
-
-Provide a comprehensive electronics analysis:
-
-🔌 ELECTRONIC ANALYSIS:
-- Circuit functionality and components
-- Power requirements and management
-- Signal flow and processing
-- Component selection rationale
-- Integration capabilities
-
-⚡ DESIGN CONSIDERATIONS:
-- PCB layout considerations
-- Thermal management
-- EMI/EMC considerations
-- Testing and debugging approach
-- Reliability factors""",
-
-                    "other": f"""You are an engineering expert. Analyze this design: "{description}"
-
-Provide a comprehensive engineering analysis:
-
-🔍 TECHNICAL ASSESSMENT:
-- Design purpose and functionality
-- Key engineering principles applied
-- Component relationships and interactions
-- Performance characteristics
-- Innovation aspects
-
-💡 RECOMMENDATIONS:
-- Potential improvements
-- Alternative approaches
-- Implementation considerations
-- Risk factors and mitigation
-- Future development opportunities"""
-                }
-                
-                # Prepare request
-                request_data = {
-                    "model": model_name,
-                    "prompt": domain_prompts[domain],
-                    "stream": False
-                }
-                
-                # Send request to Ollama
-                response = requests.post(
-                    f"{ollama_url}/api/generate",
-                    json=request_data,
-                    timeout=60
-                )
-                
-                if response.status_code == 200:
-                    analysis_data = response.json()
-                    st.session_state.analysis_result = analysis_data.get("response", "")
-                else:
-                    st.error(f"❌ Ollama API Error: {response.status_code}")
-                    st.session_state.analysis_result = None
-                    
-            except requests.exceptions.ConnectionError:
-                st.error("🚫 Cannot connect to Ollama server. Make sure Ollama is running!")
-            except requests.exceptions.Timeout:
-                st.error("⏰ Request timed out. The server might be busy or slow.")
-            except Exception as e:
-                st.error(f"⚠️ An error occurred: {str(e)}")
-
-# Display analysis results
-if st.session_state.analysis_result:
-    st.markdown("---")
-    st.subheader("📊 Analysis Results")
-    
-    with st.container():
-        st.markdown(f"""
-        <div class="analysis-result">
-            <h3>🔍 Engineering Analysis Results</h3>
-            <div style="white-space: pre-wrap; line-height: 1.6; margin-top: 1rem;">
-                {st.session_state.analysis_result}
+        with st.spinner("🤖 Generating AI analysis (Demo Mode)..."):
+            # Simulate AI processing time
+            time.sleep(2)
+            
+            # Get mock analysis
+            analysis = get_mock_analysis(domain, description)
+            
+            # Display results
+            st.markdown("---")
+            st.subheader("📊 Analysis Results")
+            
+            st.markdown(f"""
+            <div class="analysis-result">
+                <h3>🔍 Engineering Analysis Results (Demo)</h3>
+                <div style="white-space: pre-wrap; line-height: 1.6; margin-top: 1rem;">
+                    {analysis}
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+            
+            # Download button
+            st.download_button(
+                label="📥 Download Analysis Report",
+                data=analysis,
+                file_name=f"engineering_analysis_{domain}.txt",
+                mime="text/plain",
+                use_container_width=True
+            )
+
+# Information section
+with st.expander("ℹ️ About This Demo"):
+    st.markdown("""
+    ### How This Works
     
-    # Download button for results
-    st.download_button(
-        label="📥 Download Analysis",
-        data=st.session_state.analysis_result,
-        file_name="engineering_analysis.txt",
-        mime="text/plain"
-    )
+    **Local Version (Full Functionality):**
+    1. Run Ollama locally: `ollama run tinyllama:latest`
+    2. Use the HTML file with your browser
+    3. Connects to local AI for real analysis
+    
+    **Streamlit Demo (This Version):**
+    - Shows the user interface and workflow
+    - Uses mock responses to demonstrate capabilities
+    - Can be deployed on Streamlit Cloud
+    
+    ### For Your Assignment:
+    - Submit both versions
+    - HTML version for actual Ollama functionality
+    - Streamlit version for deployment demonstration
+    """)
 
 # Footer
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #7f8c8d; padding: 2rem;">
-    <p><strong>Engineering Analysis AI</strong> | Powered by Ollama & Streamlit</p>
-    <p>For best results, provide detailed descriptions of your designs.</p>
+<div style="text-align: center; color: #7f8c8d; padding-top: 2rem;">
+    <p><strong>Engineering Analysis AI</strong> | Demo Version for Streamlit Cloud</p>
+    <p><small>For full AI functionality, use the local HTML version with Ollama</small></p>
 </div>
 """, unsafe_allow_html=True)
