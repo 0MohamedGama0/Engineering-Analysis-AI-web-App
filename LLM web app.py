@@ -1,11 +1,8 @@
 import streamlit as st
 import requests
-from PIL import Image
-import io
+import base64
 
-# ------------------------------
-# CONFIG
-# ------------------------------
+# ---------------- CONFIG ----------------
 st.set_page_config(
     page_title="Engineering Analysis AI",
     page_icon="🔧",
@@ -13,112 +10,95 @@ st.set_page_config(
 )
 
 HF_API_KEY = st.secrets["HF_API_KEY"]
+MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 
-VISION_MODEL = "Salesforce/blip-image-captioning-large"
-TEXT_MODEL = "google/gemma-2b-it"
-
-HF_ROUTER = "https://router.huggingface.co/hf-inference/models/"
-
-headers = {
-    "Authorization": f"Bearer {HF_API_KEY}"
+HEADERS = {
+    "Authorization": f"Bearer {HF_API_KEY}",
+    "Content-Type": "application/json"
 }
 
-# ------------------------------
-# FUNCTIONS
-# ------------------------------
+# ---------------- UI ----------------
+st.title("🔧 Engineering Analysis AI")
+st.caption("Robotics • Design Engineering • Startups")
 
-def vision_caption(image):
-    url = HF_ROUTER + VISION_MODEL
+image = st.file_uploader(
+    "Upload your design image (for reference)",
+    type=["png", "jpg", "jpeg"]
+)
 
-    img_bytes = io.BytesIO()
-    image.save(img_bytes, format="PNG")
-    img_bytes = img_bytes.getvalue()
+domain = st.selectbox(
+    "Select design domain",
+    [
+        "Robotics / Mechanical Systems",
+        "Product Design",
+        "CAD / 3D Printing",
+        "Electronics / PCB Design"
+    ]
+)
 
-    response = requests.post(
-        url,
-        headers=headers,
-        data=img_bytes,
-        timeout=60
-    )
+description = st.text_area(
+    "Describe what you see in the image",
+    placeholder="Example: A 4-DOF robotic arm using servo motors and aluminum links..."
+)
 
-    if response.status_code != 200:
-        st.error(response.text)
-        return None
+analyze = st.button("Analyze Design")
 
-    return response.json()[0]["generated_text"]
+# ---------------- PROMPT ----------------
+def build_prompt(domain, description):
+    return f"""
+You are a professional engineering expert.
 
+Domain: {domain}
 
-def engineering_analysis(caption, domain):
-    url = HF_ROUTER + TEXT_MODEL
+Design description:
+{description}
 
-    prompt = f"""
-You are an expert {domain} engineer.
-
-Analyze the following design described from an image:
-
-"{caption}"
-
-Provide:
-1. Technical overview
-2. Key components
-3. Engineering strengths
-4. Limitations
-5. Improvement suggestions
+Provide a structured engineering analysis including:
+- Technical overview
+- Key components
+- Strengths and weaknesses
+- Design improvements
+- Real-world applications
 """
 
+# ---------------- LLM CALL ----------------
+def call_llm(prompt):
     payload = {
         "inputs": prompt,
         "parameters": {
+            "temperature": 0.5,
             "max_new_tokens": 400
         }
     }
 
     response = requests.post(
-        url,
-        headers=headers,
+        MODEL_URL,
+        headers=HEADERS,
         json=payload,
         timeout=60
     )
 
     if response.status_code != 200:
-        st.error(response.text)
+        st.error(f"Model error: {response.text}")
         return None
 
-    return response.json()[0]["generated_text"]
+    try:
+        data = response.json()
+        return data[0]["generated_text"]
+    except Exception:
+        st.error("Failed to parse model response.")
+        st.text(response.text)
+        return None
 
-# ------------------------------
-# UI
-# ------------------------------
+# ---------------- EXECUTION ----------------
+if analyze:
+    if not description:
+        st.warning("Please describe the design.")
+    else:
+        with st.spinner("Analyzing design..."):
+            prompt = build_prompt(domain, description)
+            result = call_llm(prompt)
 
-st.title("🔧 Engineering Analysis AI")
-st.caption("Vision-Language LLM for Robotics, Design & Engineering")
-
-uploaded_image = st.file_uploader(
-    "Upload an engineering image (robot, CAD, mechanism)",
-    type=["png", "jpg", "jpeg"]
-)
-
-domain = st.selectbox(
-    "Select domain",
-    ["Robotics", "Mechanical Design", "Product Design", "Electronics"]
-)
-
-if uploaded_image:
-    image = Image.open(uploaded_image)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
-
-    if st.button("Analyze Design"):
-        with st.spinner("Analyzing image..."):
-            caption = vision_caption(image)
-
-        if caption:
-            st.success("Image understood successfully!")
-            st.write("**Image Description:**")
-            st.write(caption)
-
-            with st.spinner("Generating engineering analysis..."):
-                analysis = engineering_analysis(caption, domain)
-
-            if analysis:
-                st.subheader("🔍 Engineering Analysis")
-                st.write(analysis)
+        if result:
+            st.success("Analysis complete")
+            st.markdown(result)
