@@ -1,35 +1,17 @@
 import streamlit as st
 import requests
-import base64
 from PIL import Image
 import io
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-
-# ------------------ Page Config ------------------
-st.set_page_config(
-    page_title="Engineering Analysis AI",
-    page_icon="🔧",
-    layout="centered"
-)
+st.set_page_config(page_title="Engineering Analysis AI", page_icon="🔧")
 
 st.title("🔧 Engineering Analysis AI")
-st.caption("Upload your design and get expert AI-powered engineering analysis")
+st.caption("Deployed on Streamlit Cloud using Hugging Face Inference API")
 
-# ------------------ Sidebar ------------------
-st.sidebar.header("⚙️ Configuration")
-st.sidebar.info(
-    "This app uses:\n"
-    "- Moondream → Image understanding\n"
-    "- TinyLlama → Engineering reasoning\n\n"
-    "Optimized for low-spec laptops."
-)
-
-# ------------------ Domain Selection ------------------
+# ---------------- Domain ----------------
 domain = st.selectbox(
-    "🏷️ Select the design domain",
+    "Select the domain",
     [
-        "-- Select the domain --",
         "Robotics / Mechanical Systems",
         "Product Design",
         "CAD Model / 3D Printed",
@@ -37,86 +19,51 @@ domain = st.selectbox(
     ]
 )
 
-# ------------------ Image Upload ------------------
-uploaded_file = st.file_uploader(
-    "📁 Upload your design image",
-    type=["jpg", "jpeg", "png"]
-)
+image = st.file_uploader("Upload an engineering image", type=["jpg", "png"])
+notes = st.text_area("Optional user notes")
 
-user_description = st.text_area(
-    "📝 Optional: Add your own notes (materials, function, concerns)",
-    height=120
-)
+# ---------------- Hugging Face API ----------------
+HF_API_KEY = st.secrets["HF_API_KEY"]
 
-# ------------------ Helper Functions ------------------
+VISION_MODEL = "Salesforce/blip-image-captioning-base"
+TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
-def image_to_base64(image_file):
-    image = Image.open(image_file)
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    return base64.b64encode(buffer.getvalue()).decode()
+headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 
-def call_ollama(payload):
-    response = requests.post(OLLAMA_URL, json=payload)
-    response.raise_for_status()
-    return response.json()["response"]
+def vision_caption(image):
+    url = f"https://api-inference.huggingface.co/models/{VISION_MODEL}"
+    response = requests.post(url, headers=headers, files={"file": image})
+    return response.json()[0]["generated_text"]
 
 
-def vision_analysis(image_b64):
-    payload = {
-        "model": "moondream",
-        "prompt": "Describe this engineering image clearly and objectively.",
-        "images": [image_b64],
-        "stream": False
-    }
-    return call_ollama(payload)
-
-
-def engineering_analysis(domain, vision_text, user_text):
+def reasoning(domain, vision_text, notes):
     prompt = f"""
-You are an expert engineering analyst.
-
-IMAGE INTERPRETATION (AI Vision):
+Image description:
 {vision_text}
 
-USER NOTES:
-{user_text if user_text else "No additional notes provided."}
+User notes:
+{notes}
 
-TASK:
-1. Validate the image interpretation
-2. Correct inconsistencies if any
-3. Provide structured, domain-specific engineering analysis
-4. Identify risks and improvements
-
-DOMAIN:
+Provide a structured engineering analysis for:
 {domain}
-
-Respond professionally and clearly.
 """
-    payload = {
-        "model": "tinyllama:latest",
-        "prompt": prompt,
-        "stream": False
-    }
-    return call_ollama(payload)
+    url = f"https://api-inference.huggingface.co/models/{TEXT_MODEL}"
+    payload = {"inputs": prompt}
+    response = requests.post(url, headers=headers, json=payload)
+    return response.json()[0]["generated_text"]
 
 
-# ------------------ Run Analysis ------------------
-if st.button("🚀 Analyze Design", disabled=not (uploaded_file and domain != "-- Select the domain --")):
+# ---------------- Run ----------------
+if st.button("Analyze Design") and image:
+    st.image(image)
 
-    st.subheader("📷 Uploaded Image")
-    st.image(uploaded_file, use_column_width=True)
+    with st.spinner("Understanding image..."):
+        vision_text = vision_caption(image)
 
-    with st.spinner("🔍 Understanding image..."):
-        image_b64 = image_to_base64(uploaded_file)
-        vision_result = vision_analysis(image_b64)
+    st.info(vision_text)
 
-    st.subheader("🧠 AI Image Interpretation")
-    st.info(vision_result)
+    with st.spinner("Performing engineering analysis..."):
+        analysis = reasoning(domain, vision_text, notes)
 
-    with st.spinner("⚙️ Performing engineering analysis..."):
-        analysis_result = engineering_analysis(domain, vision_result, user_description)
-
-    st.subheader("📊 Engineering Analysis Result")
-    st.success(analysis_result)
+    st.success(analysis)
