@@ -1,106 +1,122 @@
 import streamlit as st
-from huggingface_hub import InferenceClient
-import os
+import requests
+import base64
+from PIL import Image
+import io
 
-# ---------------- CONFIG ----------------
+OLLAMA_URL = "http://localhost:11434/api/generate"
+
+# ------------------ Page Config ------------------
 st.set_page_config(
     page_title="Engineering Analysis AI",
     page_icon="🔧",
     layout="centered"
 )
 
-# Get your Hugging Face API key from Streamlit secrets
-HF_TOKEN = st.secrets.get("HF_API_KEY", os.getenv("HF_API_KEY"))
-
-# Initialize the InferenceClient with the new API
-client = InferenceClient(token=HF_TOKEN)
-
-# ---------------- UI ----------------
 st.title("🔧 Engineering Analysis AI")
-st.caption("Robotics • Design Engineering • Startups")
+st.caption("Upload your design and get expert AI-powered engineering analysis")
 
-image = st.file_uploader(
-    "Upload your design image (for reference)",
-    type=["png", "jpg", "jpeg"]
+# ------------------ Sidebar ------------------
+st.sidebar.header("⚙️ Configuration")
+st.sidebar.info(
+    "This app uses:\n"
+    "- Moondream → Image understanding\n"
+    "- TinyLlama → Engineering reasoning\n\n"
+    "Optimized for low-spec laptops."
 )
 
+# ------------------ Domain Selection ------------------
 domain = st.selectbox(
-    "Select design domain",
+    "🏷️ Select the design domain",
     [
+        "-- Select the domain --",
         "Robotics / Mechanical Systems",
         "Product Design",
-        "CAD / 3D Printing",
+        "CAD Model / 3D Printed",
         "Electronics / PCB Design"
     ]
 )
 
-description = st.text_area(
-    "Describe what you see in the image",
-    placeholder="Example: A 4-DOF robotic arm using servo motors and aluminum links..."
+# ------------------ Image Upload ------------------
+uploaded_file = st.file_uploader(
+    "📁 Upload your design image",
+    type=["jpg", "jpeg", "png"]
 )
 
-analyze = st.button("Analyze Design")
+user_description = st.text_area(
+    "📝 Optional: Add your own notes (materials, function, concerns)",
+    height=120
+)
 
-# ---------------- PROMPT ----------------
-def build_prompt(domain, description):
-    return f"""
-You are a professional engineering expert.
+# ------------------ Helper Functions ------------------
 
-Domain: {domain}
+def image_to_base64(image_file):
+    image = Image.open(image_file)
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode()
 
-Design description:
-{description}
 
-Provide a structured engineering analysis including:
-- Technical overview
-- Key components
-- Strengths and weaknesses
-- Design improvements
-- Real-world applications
+def call_ollama(payload):
+    response = requests.post(OLLAMA_URL, json=payload)
+    response.raise_for_status()
+    return response.json()["response"]
 
-Please format your response with clear headings and bullet points where appropriate.
+
+def vision_analysis(image_b64):
+    payload = {
+        "model": "moondream",
+        "prompt": "Describe this engineering image clearly and objectively.",
+        "images": [image_b64],
+        "stream": False
+    }
+    return call_ollama(payload)
+
+
+def engineering_analysis(domain, vision_text, user_text):
+    prompt = f"""
+You are an expert engineering analyst.
+
+IMAGE INTERPRETATION (AI Vision):
+{vision_text}
+
+USER NOTES:
+{user_text if user_text else "No additional notes provided."}
+
+TASK:
+1. Validate the image interpretation
+2. Correct inconsistencies if any
+3. Provide structured, domain-specific engineering analysis
+4. Identify risks and improvements
+
+DOMAIN:
+{domain}
+
+Respond professionally and clearly.
 """
+    payload = {
+        "model": "tinyllama:latest",
+        "prompt": prompt,
+        "stream": False
+    }
+    return call_ollama(payload)
 
-# ---------------- LLM CALL ----------------
-def call_llm(prompt):
-    try:
-        # Use the chat.completions endpoint with a supported model
-        response = client.chat.completions.create(
-            model="meta-llama/Llama-3.1-8B-Instruct",  # Supported model
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            max_tokens=400,
-            temperature=0.5
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        st.error(f"Error calling the model: {str(e)}")
-        st.info("This might be due to: 1) Missing 'Inference Providers' permission on your token, 2) Model not available, or 3) Rate limiting.")
-        return None
 
-# ---------------- EXECUTION ----------------
-if analyze:
-    if not description:
-        st.warning("Please describe the design.")
-    else:
-        with st.spinner("🤖 AI is analyzing your design..."):
-            prompt = build_prompt(domain, description)
-            result = call_llm(prompt)
+# ------------------ Run Analysis ------------------
+if st.button("🚀 Analyze Design", disabled=not (uploaded_file and domain != "-- Select the domain --")):
 
-        if result:
-            st.success("✅ Analysis Complete")
-            st.markdown("---")
-            st.subheader("📊 Engineering Analysis Results")
-            st.markdown(result)
-            
-            # Add a download button for the analysis
-            st.download_button(
-                label="📥 Download Analysis",
-                data=result,
-                file_name=f"engineering_analysis_{domain.split('/')[0].lower().replace(' ', '_')}.txt",
-                mime="text/plain"
-            )
+    st.subheader("📷 Uploaded Image")
+    st.image(uploaded_file, use_column_width=True)
+
+    with st.spinner("🔍 Understanding image..."):
+        image_b64 = image_to_base64(uploaded_file)
+        vision_result = vision_analysis(image_b64)
+
+    st.subheader("🧠 AI Image Interpretation")
+    st.info(vision_result)
+
+    with st.spinner("⚙️ Performing engineering analysis..."):
+        analysis_result = engineering_analysis(domain, vision_result, user_description)
+
+    st.subheader("📊 Engineering Analysis Result")
+    st.success(analysis_result)
