@@ -5,113 +5,84 @@ from PIL import Image
 import io
 import os
 
+# ---------------- CONFIG ----------------
+HF_API_URL = "https://api-inference.huggingface.co/models/llava-hf/llava-1.5-7b-hf"
 HF_API_KEY = st.secrets["HF_API_KEY"]
-HF_MODEL = "Salesforce/blip-image-captioning-base"
-HF_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
 
-headers = {
+HEADERS = {
     "Authorization": f"Bearer {HF_API_KEY}"
 }
 
+# ---------------- FUNCTIONS ----------------
+def encode_image(image):
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode()
+
+def vision_analysis(image_b64, domain, description):
+    prompt = f"""
+You are an expert engineer.
+
+Domain: {domain}
+
+User description:
+{description}
+
+Analyze the uploaded image and provide:
+- Technical interpretation
+- Engineering strengths
+- Limitations
+- Improvement suggestions
+"""
+
+    payload = {
+        "inputs": {
+            "image": image_b64,
+            "text": prompt
+        }
+    }
+
+    response = requests.post(HF_API_URL, headers=HEADERS, json=payload, timeout=60)
+
+    if response.status_code != 200:
+        return f"❌ API Error: {response.text}"
+
+    result = response.json()
+
+    if isinstance(result, list):
+        return result[0].get("generated_text", "No response")
+    return result.get("generated_text", "No response")
+
+# ---------------- STREAMLIT UI ----------------
 st.set_page_config(page_title="Engineering Analysis AI", layout="centered")
 
 st.title("🔧 Engineering Analysis AI")
-st.write("Upload an engineering or robotics design image for AI analysis")
+st.subheader("Vision-Language Analysis for Robotics & Design")
 
-uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+uploaded_image = st.file_uploader(
+    "Upload a design image",
+    type=["png", "jpg", "jpeg"]
+)
 
-def analyze_image(image_bytes):
-    response = requests.post(
-        HF_URL,
-        headers=headers,
-        files={"file": image_bytes}
-    )
+domain = st.selectbox(
+    "Select design domain",
+    ["Robotics", "Product Design", "CAD / 3D Printing", "Electronics"]
+)
 
-    if response.status_code != 200:
-        st.error("Hugging Face API error")
-        return None
+description = st.text_area(
+    "Describe the design",
+    placeholder="Example: 4-DOF robotic arm with servo motors..."
+)
 
-    return response.json()
-
-if uploaded_file:
-    image = Image.open(uploaded_file)
+if uploaded_image:
+    image = Image.open(uploaded_image)
     st.image(image, caption="Uploaded Design", use_column_width=True)
 
-    if st.button("Analyze Design"):
-        with st.spinner("Analyzing with AI..."):
-            result = analyze_image(uploaded_file.getvalue())
+if st.button("Analyze Design") and uploaded_image and description:
+    with st.spinner("Analyzing with AI..."):
+        image_b64 = encode_image(image)
+        result = vision_analysis(image_b64, domain, description)
 
-        if result:
-            caption = result[0]["generated_text"]
-            st.subheader("🧠 AI Interpretation")
-            st.write(caption)
-
-            st.subheader("🔍 Engineering Insight")
-            st.write(f"""
-            This design appears to involve **{caption.lower()}**.
-
-            From an engineering perspective, this system likely involves:
-            - Mechanical structure and load-bearing components
-            - Actuation and motion control
-            - Potential integration with sensors or electronics
-            - Design-for-manufacturing considerations
-            """)
-
-def vision_analysis(image_b64):
-    payload = {
-        "model": "moondream",
-        "prompt": "Describe this engineering image clearly and objectively.",
-        "images": [image_b64],
-        "stream": False
-    }
-    return call_ollama(payload)
-
-
-def engineering_analysis(domain, vision_text, user_text):
-    prompt = f"""
-You are an expert engineering analyst.
-
-IMAGE INTERPRETATION (AI Vision):
-{vision_text}
-
-USER NOTES:
-{user_text if user_text else "No additional notes provided."}
-
-TASK:
-1. Validate the image interpretation
-2. Correct inconsistencies if any
-3. Provide structured, domain-specific engineering analysis
-4. Identify risks and improvements
-
-DOMAIN:
-{domain}
-
-Respond professionally and clearly.
-"""
-    payload = {
-        "model": "tinyllama:latest",
-        "prompt": prompt,
-        "stream": False
-    }
-    return call_ollama(payload)
-
-
-# ------------------ Run Analysis ------------------
-if st.button("🚀 Analyze Design", disabled=not (uploaded_file and domain != "-- Select the domain --")):
-
-    st.subheader("📷 Uploaded Image")
-    st.image(uploaded_file, use_column_width=True)
-
-    with st.spinner("🔍 Understanding image..."):
-        image_b64 = image_to_base64(uploaded_file)
-        vision_result = vision_analysis(image_b64)
-
-    st.subheader("🧠 AI Image Interpretation")
-    st.info(vision_result)
-
-    with st.spinner("⚙️ Performing engineering analysis..."):
-        analysis_result = engineering_analysis(domain, vision_result, user_description)
-
-    st.subheader("📊 Engineering Analysis Result")
-    st.success(analysis_result)
-
+    st.success("Analysis Complete")
+    st.markdown("### 🔍 Engineering Analysis")
+    st.write(result)
