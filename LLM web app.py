@@ -32,27 +32,42 @@ headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 
 def vision_caption(image):
-    url = f"https://api-inference.huggingface.co/models/{VISION_MODEL}"
-    response = requests.post(url, headers=headers, files={"file": image})
-    return response.json()[0]["generated_text"]
+    API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
+    headers = {
+        "Authorization": f"Bearer {st.secrets['HF_API_KEY']}"
+    }
 
+    response = requests.post(
+        API_URL,
+        headers=headers,
+        files={"image": image}
+    )
 
-def reasoning(domain, vision_text, notes):
-    prompt = f"""
-Image description:
-{vision_text}
+    # 🔍 DEBUG: check response status
+    if response.status_code != 200:
+        st.error(f"Hugging Face API Error: {response.status_code}")
+        st.code(response.text)
+        return "❌ Model error"
 
-User notes:
-{notes}
+    # 🔍 Try parsing JSON safely
+    try:
+        data = response.json()
+    except Exception:
+        st.error("Invalid response from Hugging Face")
+        st.code(response.text)
+        return "❌ Invalid API response"
 
-Provide a structured engineering analysis for:
-{domain}
-"""
-    url = f"https://api-inference.huggingface.co/models/{TEXT_MODEL}"
-    payload = {"inputs": prompt}
-    response = requests.post(url, headers=headers, json=payload)
-    return response.json()[0]["generated_text"]
+    # 🔍 Handle model loading
+    if isinstance(data, dict) and "error" in data:
+        if "loading" in data["error"].lower():
+            return "⏳ Model is loading, please try again in 20–30 seconds."
+        return f"❌ API Error: {data['error']}"
 
+    # 🔍 Expected successful response
+    if isinstance(data, list) and "generated_text" in data[0]:
+        return data[0]["generated_text"]
+
+    return "❌ Unexpected API response format"
 
 # ---------------- Run ----------------
 if st.button("Analyze Design") and image:
@@ -67,3 +82,4 @@ if st.button("Analyze Design") and image:
         analysis = reasoning(domain, vision_text, notes)
 
     st.success(analysis)
+
