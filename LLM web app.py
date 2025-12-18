@@ -9,26 +9,6 @@ st.title("🔧 Engineering Analysis AI")
 st.caption("Deployed on Streamlit Cloud using Hugging Face Inference API")
 
 # ---------------- Domain ----------------
-domain = st.selectbox(
-    "Select the domain",
-    [
-        "Robotics / Mechanical Systems",
-        "Product Design",
-        "CAD Model / 3D Printed",
-        "Electronics / PCB Design"
-    ]
-)
-
-image = st.file_uploader("Upload an engineering image", type=["jpg", "png"])
-notes = st.text_area("Optional user notes")
-
-# ---------------- Hugging Face API ----------------
-HF_API_KEY = st.secrets["HF_API_KEY"]
-
-VISION_MODEL = "Salesforce/blip-image-captioning-base"
-TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
-
-headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 # =============================
 # 1️⃣ DEFINE FUNCTIONS FIRST
@@ -79,6 +59,7 @@ if uploaded_file:
             st.success("Analysis Complete")
             st.write(vision_text)
             
+
 
 
 
