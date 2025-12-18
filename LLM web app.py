@@ -29,6 +29,7 @@ VISION_MODEL = "Salesforce/blip-image-captioning-base"
 TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
 headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+
 def vision_caption(image):
     API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
     headers = {
@@ -67,26 +68,6 @@ def vision_caption(image):
 
     return "❌ Unexpected API response format"
 
-# =============================
-# 2️⃣ STREAMLIT UI
-# =============================
-
-st.set_page_config(page_title="Engineering Analysis AI")
-
-st.title("🔧 Engineering Analysis AI")
-
-uploaded_file = st.file_uploader("Upload an engineering image", type=["png", "jpg", "jpeg"])
-
-if uploaded_file:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
-
-    if st.button("Analyze Image"):
-        with st.spinner("Analyzing..."):
-            vision_text = vision_caption(uploaded_file)
-            st.success("Analysis Complete")
-            st.write(vision_text)
-
 # ---------------- Run ----------------
 if st.button("Analyze Design") and image:
     st.image(image)
@@ -100,6 +81,7 @@ if st.button("Analyze Design") and image:
         analysis = reasoning(domain, vision_text, notes)
 
     st.success(analysis)
+
 
 
 
