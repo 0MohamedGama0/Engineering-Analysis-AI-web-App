@@ -31,51 +31,50 @@ TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 
-def reasoning(domain, vision_text, notes):
-    API_URL = "https://api-inference.huggingface.co/models/google/gemma-2b-it"
+def vision_caption(image):
+    API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
     headers = {
         "Authorization": f"Bearer {st.secrets['HF_API_KEY']}"
     }
 
-    prompt = f"""
-You are an expert in {domain} engineering.
-
-IMAGE DESCRIPTION:
-{vision_text}
-
-USER NOTES:
-{notes}
-
-Provide a structured engineering analysis including:
-- Technical overview
-- Key components
-- Design strengths
-- Limitations
-- Improvement suggestions
-"""
-
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 500,
-            "temperature": 0.3
-        }
-    }
-
-    response = requests.post(API_URL, headers=headers, json=payload)
+    response = requests.post(
+        API_URL,
+        headers=headers,
+        files={"image": image}
+    )
 
     if response.status_code != 200:
-        return f"❌ LLM error: {response.text}"
+        return "❌ Hugging Face API error"
 
     try:
         data = response.json()
     except Exception:
-        return "❌ Invalid response from LLM"
+        return "❌ Invalid API response"
 
-    if isinstance(data, list) and "generated_text" in data[0]:
-        return data[0]["generated_text"]
+    if isinstance(data, dict) and "error" in data:
+        return f"❌ {data['error']}"
 
-    return "❌ Unexpected LLM output"
+    return data[0]["generated_text"]
+
+# =============================
+# 2️⃣ STREAMLIT UI
+# =============================
+
+st.set_page_config(page_title="Engineering Analysis AI")
+
+st.title("🔧 Engineering Analysis AI")
+
+uploaded_file = st.file_uploader("Upload an engineering image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
+
+    if st.button("Analyze Image"):
+        with st.spinner("Analyzing..."):
+            vision_text = vision_caption(uploaded_file)
+            st.success("Analysis Complete")
+            st.write(vision_text)
 
 # ---------------- Run ----------------
 if st.button("Analyze Design") and image:
@@ -90,5 +89,6 @@ if st.button("Analyze Design") and image:
         analysis = reasoning(domain, vision_text, notes)
 
     st.success(analysis)
+
 
 
