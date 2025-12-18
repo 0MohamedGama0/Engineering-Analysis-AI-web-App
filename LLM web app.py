@@ -96,4 +96,53 @@ Provide a structured engineering analysis including:
     try:
         data = response.json()
     except Exception:
-        return "Text model
+        return "Text model returned invalid JSON."
+
+    if isinstance(data, list) and "generated_text" in data[0]:
+        return data[0]["generated_text"]
+
+    if isinstance(data, dict) and "error" in data:
+        return f"Text model error: {data['error']}"
+
+    return "Unable to generate engineering analysis."
+
+
+# -----------------------------
+# UI
+# -----------------------------
+st.title("🔧 Engineering Analysis AI")
+st.caption("Vision-Language AI for Robotics & Design Engineering")
+
+uploaded_file = st.file_uploader(
+    "Upload an engineering or design image",
+    type=["png", "jpg", "jpeg"]
+)
+
+domain = st.selectbox(
+    "Select domain",
+    ["Robotics", "Product Design", "Mechanical", "Electronics", "CAD / 3D Printing"]
+)
+
+user_description = st.text_area(
+    "Describe the design (optional but recommended)",
+    height=120
+)
+
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Design", use_container_width=True)
+
+    if st.button("Analyze Design"):
+        if not HF_API_KEY:
+            st.error("Hugging Face API key not found. Add it to Streamlit secrets.")
+            st.stop()
+
+        with st.spinner("Analyzing design using AI..."):
+            caption = vision_caption(image)
+            analysis = engineering_analysis(caption, user_description, domain)
+
+        st.subheader("🧠 AI Image Understanding")
+        st.write(caption)
+
+        st.subheader("📊 Engineering Analysis")
+        st.write(analysis)
