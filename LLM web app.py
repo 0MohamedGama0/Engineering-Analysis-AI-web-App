@@ -1,8 +1,8 @@
 import streamlit as st
 import requests
-from PIL import Image
 import io
-import os
+from PIL import Image
+
 
 # -----------------------------
 # CONFIG
@@ -155,4 +155,5 @@ if uploaded_file:
 
         st.subheader("📊 Engineering Analysis")
         st.write(analysis)
+
 
