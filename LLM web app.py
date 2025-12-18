@@ -30,30 +30,29 @@ TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
 headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
+
 def vision_caption(image):
-    API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
-    headers = {
-        "Authorization": f"Bearer {st.secrets['HF_API_KEY']}"
-    }
+    url = f"https://api-inference.huggingface.co/models/{VISION_MODEL}"
+    response = requests.post(url, headers=headers, files={"file": image})
+    return response.json()[0]["generated_text"]
 
-    response = requests.post(
-        API_URL,
-        headers=headers,
-        files={"image": image}
-    )
 
-    if response.status_code != 200:
-        return "❌ Hugging Face API error"
+def reasoning(domain, vision_text, notes):
+    prompt = f"""
+Image description:
+{vision_text}
 
-    try:
-        data = response.json()
-    except Exception:
-        return "❌ Invalid API response"
+User notes:
+{notes}
 
-    if isinstance(data, dict) and "error" in data:
-        return f"❌ {data['error']}"
+Provide a structured engineering analysis for:
+{domain}
+"""
+    url = f"https://api-inference.huggingface.co/models/{TEXT_MODEL}"
+    payload = {"inputs": prompt}
+    response = requests.post(url, headers=headers, json=payload)
+    return response.json()[0]["generated_text"]
 
-    return data[0]["generated_text"]
 
 # ---------------- Run ----------------
 if st.button("Analyze Design") and image:
@@ -65,8 +64,6 @@ if st.button("Analyze Design") and image:
     st.info(vision_text)
 
     with st.spinner("Performing engineering analysis..."):
-        print(domain, vision_text, notes)
         analysis = reasoning(domain, vision_text, notes)
 
     st.success(analysis)
-
