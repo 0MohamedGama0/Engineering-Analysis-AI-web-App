@@ -32,7 +32,18 @@ def vision_caption(image_bytes):
         return data[0]["generated_text"]
 
     raise RuntimeError(f"Unexpected API response: {data}")
+    
+uploaded_file = st.file_uploader("Upload image", type=["png", "jpg", "jpeg"])
 
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
+
+    image_bytes = uploaded_file.getvalue()
+    caption = vision_caption(image_bytes)
+
+    st.success("Image Analysis Complete")
+    st.write(caption)
 
 # ---------------- Run ----------------
 if st.button("Analyze Design") and image:
@@ -47,5 +58,6 @@ if st.button("Analyze Design") and image:
         analysis = reasoning(domain, vision_text, notes)
 
     st.success(analysis)
+
 
 
