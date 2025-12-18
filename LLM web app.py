@@ -60,57 +60,40 @@ def vision_caption(image: Image.Image) -> str:
 
     return "Unable to generate image description."
 
-def engineering_analysis(caption: str, user_desc: str, domain: str) -> str:
-    prompt = f"""
-You are an expert engineering analyst.
+TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
-DOMAIN:
-{domain}
-
-IMAGE DESCRIPTION:
-{caption}
-
-USER DESCRIPTION:
-{user_desc}
-
-Provide a structured engineering analysis including:
-- Functionality
-- Components
-- Design strengths
-- Limitations
-- Improvement suggestions
-"""
-
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 400,
-            "temperature": 0.3
-        }
-    }
-
+def engineering_analysis(prompt: str) -> str:
     response = requests.post(
-        f"https://api-inference.huggingface.co/models/{TEXT_MODEL}",
-        headers=HEADERS,
-        json=payload
+        f"{BASE_URL}/{TEXT_MODEL}",
+        headers={
+            "Authorization": f"Bearer {HF_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 500,
+                "temperature": 0.4
+            }
+        },
+        timeout=60
     )
 
     if response.status_code != 200:
-        return f"Text model error: {response.text}"
+        return f"Text model HTTP {response.status_code}: model unavailable."
 
     try:
         data = response.json()
     except Exception:
-        return "Text model returned invalid JSON."
+        return "Text model returned invalid response."
 
     if isinstance(data, list) and "generated_text" in data[0]:
         return data[0]["generated_text"]
 
-    if isinstance(data, dict) and "error" in data:
+    if "error" in data:
         return f"Text model error: {data['error']}"
 
-    return "Unable to generate engineering analysis."
-
+    return "Unable to generate analysis."
 
 # -----------------------------
 # UI
@@ -151,6 +134,7 @@ if uploaded_file:
 
         st.subheader("📊 Engineering Analysis")
         st.write(analysis)
+
 
 
 
