@@ -65,6 +65,8 @@ if st.button("Analyze Design") and image:
     st.info(vision_text)
 
     with st.spinner("Performing engineering analysis..."):
+        print(domain, vision_text, notes)
         analysis = reasoning(domain, vision_text, notes)
 
     st.success(analysis)
+
