@@ -26,43 +26,39 @@ HEADERS = {
 # FUNCTIONS
 # -----------------------------
 
+VISION_MODEL = "Salesforce/blip-image-captioning-base"
+BASE_URL = "https://router.huggingface.co/hf-inference/models"
+
 def vision_caption(image: Image.Image) -> str:
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     buffer.seek(0)
 
     response = requests.post(
-        f"https://api-inference.huggingface.co/models/{VISION_MODEL}",
+        f"{BASE_URL}/{VISION_MODEL}",
         headers={
             "Authorization": f"Bearer {HF_API_KEY}",
             "Accept": "application/json"
         },
-        files={"file": buffer},   # ✅ IMPORTANT FIX
+        files={"file": buffer},
         timeout=60
     )
 
-    # Handle HTTP-level errors
     if response.status_code != 200:
-        return f"Vision model HTTP {response.status_code}: Model may be loading or rate-limited."
+        return f"Vision model HTTP {response.status_code}: model unavailable or loading."
 
-    # Try parsing JSON safely
     try:
         data = response.json()
     except Exception:
-        return "Vision model returned non-JSON response (likely loading or blocked)."
+        return "Vision model returned invalid response."
 
-    # Handle known HF formats
     if isinstance(data, list) and "generated_text" in data[0]:
         return data[0]["generated_text"]
 
-    if isinstance(data, dict):
-        if "error" in data:
-            return f"Vision model error: {data['error']}"
-        if "estimated_time" in data:
-            return "Vision model is loading. Please try again in a few seconds."
+    if "error" in data:
+        return f"Vision model error: {data['error']}"
 
-    return "Unable to generate image caption."
-
+    return "Unable to generate image description."
 
 def engineering_analysis(caption: str, user_desc: str, domain: str) -> str:
     prompt = f"""
@@ -155,5 +151,6 @@ if uploaded_file:
 
         st.subheader("📊 Engineering Analysis")
         st.write(analysis)
+
 
 
