@@ -30,9 +30,6 @@ TEXT_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
 
 headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
-import requests
-import streamlit as st
-
 def vision_caption(image):
     API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
     headers = {
@@ -105,6 +102,7 @@ if st.button("Analyze Design") and image:
         analysis = reasoning(domain, vision_text, notes)
 
     st.success(analysis)
+
 
 
 
