@@ -140,7 +140,7 @@ user_description = st.text_area(
 
 if uploaded_file:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Design", width=True)
+    st.image(image, caption="Uploaded Design", use_container_width=True)
 
     if st.button("Analyze Design"):
         if not HF_API_KEY:
@@ -156,6 +156,7 @@ if uploaded_file:
 
         st.subheader("📊 Engineering Analysis")
         st.write(analysis)
+
 
 
 
