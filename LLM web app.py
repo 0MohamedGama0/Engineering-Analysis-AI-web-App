@@ -15,9 +15,9 @@ st.set_page_config(
 # Get API key from Streamlit secrets
 HF_API_KEY = st.secrets.get("HF_API_KEY", None)
 
-# Initialize the clients
-vision_client = InferenceClient(model="Salesforce/blip-image-captioning-base", token=HF_API_KEY)
-text_client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=HF_API_KEY)
+# Initialize the clients at the top of your script
+vision_client = InferenceClient(token=HF_API_KEY)
+text_client = InferenceClient(token=HF_API_KEY)
 
 # -----------------------------
 # FUNCTIONS
@@ -109,4 +109,5 @@ if uploaded_file:
 
         st.subheader("📊 Engineering Analysis")
         st.write(analysis)
+
 
