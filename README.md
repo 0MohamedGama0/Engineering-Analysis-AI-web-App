@@ -120,6 +120,7 @@ A professional web application for AI-powered engineering design analysis, combi
 ```
 
 ##📁 Project Structure
+```
 engineering-analysis-ai/
 ├── app.py                      # Main Streamlit application
 ├── requirements.txt            # Python dependencies
@@ -130,7 +131,7 @@ engineering-analysis-ai/
 └── assets/                    # Screenshots and resources
     ├── screenshot-1.png
     └── architecture.png
-
+```
 
 Process Description:
 
