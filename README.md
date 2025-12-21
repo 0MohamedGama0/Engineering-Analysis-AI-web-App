@@ -103,19 +103,21 @@ A professional web application for AI-powered engineering design analysis, combi
 
 
    # Create secrets file
-mkdir .streamlit
-echo 'HF_API_KEY = "your_huggingface_token_here"' > .streamlit/secrets.toml
+   mkdir .streamlit
+   echo 'HF_API_KEY = "your_huggingface_token_here"' > .streamlit/secrets.toml
 
 ##Streamlit Cloud Deployment
 ##Push to GitHub:
-git add .
-git commit -m "Deploy Engineering Analysis AI"
-git push origin main
+  git add .
+  git commit -m "Deploy Engineering Analysis AI"
+  git push origin main
 
 ##📦 Dependencies
+```
   streamlit>=1.28.0        # Web application framework
   Pillow>=10.0.0           # Image processing
   huggingface_hub>=0.20.0  # Hugging Face API client
+```
 
 ##📁 Project Structure
 engineering-analysis-ai/
