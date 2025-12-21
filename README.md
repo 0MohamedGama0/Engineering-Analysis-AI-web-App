@@ -112,12 +112,6 @@ A professional web application for AI-powered engineering design analysis, combi
   git commit -m "Deploy Engineering Analysis AI"
   git push origin main
 
-##📦 Dependencies
-```
-  streamlit>=1.28.0        # Web application framework
-  Pillow>=10.0.0           # Image processing
-  huggingface_hub>=0.20.0  # Hugging Face API client
-```
 
 ##📁 Project Structure
 ```
