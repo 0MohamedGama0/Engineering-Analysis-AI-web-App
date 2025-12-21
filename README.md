@@ -18,8 +18,7 @@ A professional web application for AI-powered engineering design analysis, combi
 |--------|---------|
 | **Course** | Large Language Models |
 | **Assignment** | #4: Streamlit Cloud Deployment |
-| **Student** | [Your Name] |
-| **Student ID** | [Your Student ID] |
+| **Student** | [MOHAMED GAMA] |
 | **AI Models** | BLIP (Vision) + Mistral-7B (Text) |
 | **Deployment** | Streamlit Cloud + Hugging Face Inference API |
 
