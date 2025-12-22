@@ -15,29 +15,34 @@ A professional web application for AI-powered engineering design analysis, combi
 ## 🎯 Overview
 
 | Aspect | Details |
-|--------|---------|
-| **Course** | Large Language Models |
-| **Assignment** | #4: Streamlit Cloud Deployment |
-| **Student** | [MOHAMED GAMA] |
-| **AI Models** | BLIP (Vision) + Mistral-7B (Text) |
-| **Deployment** | Streamlit Cloud + Hugging Face Inference API |
+|------|--------|
+| **Language** | Python 3.9+ |
+| **Framework** | Streamlit |
+| **Vision Model** | BLIP (Image Captioning) |
+| **Text Model** | FLAN-T5 |
+| **Deployment** | Streamlit Cloud |
+| **Inference API** | Hugging Face Router |
 
-> [!NOTE]
-> This application demonstrates a complete LLM web app deployment pipeline from local development to cloud hosting with professional API integration.
+> This application demonstrates a **vision–language pipeline** where an uploaded image is first interpreted by an AI vision model and then analyzed using a text-based LLM.
 
 ---
 
 ## ✨ Features
 
-- ✅ **Dual-Model AI Pipeline** — Computer vision + LLM for comprehensive analysis
-- ✅ **Multi-Domain Engineering Analysis** — Robotics, CAD, Electronics, Product Design, etc.
-- ✅ **Professional Interface** — Clean, responsive Streamlit UI with custom CSS
-- ✅ **Robust Error Handling** — Graceful fallbacks for API failures
-- ✅ **Secure API Integration** — Hugging Face Inference API with secret management
-- ✅ **Export Capability** — Download analysis reports as text files
-- ✅ **Demo Mode** — Functional interface without API key requirements
+- 🖼️ Image upload (CAD, robotics, electronics, product designs)
+- 🧠 AI image understanding (vision model)
+- 📊 Engineering analysis using LLM reasoning
+- 🏷️ Domain-specific analysis:
+  - Robotics / Mechanical Systems
+  - Product Design
+  - CAD / 3D Printed Models
+  - Electronics / PCB Design
+- ☁️ Fully deployed on Streamlit Cloud
+- 🔐 Secure API key handling via Streamlit Secrets
 
 ---
+
+## 🚀 How It Works
 
 ### 🏗️ Architecture
 ```
