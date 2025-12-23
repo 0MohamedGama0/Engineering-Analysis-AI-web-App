@@ -199,7 +199,8 @@ with left:
             "Manufacturing / Industrial"
         ]
     )
-  if uploaded_file:
+
+    if uploaded_file:
         image = Image.open(uploaded_file).convert("RGB")
         st.image(image, caption="Uploaded Image", use_container_width=True)
 
@@ -277,6 +278,3 @@ with right:
 # --------------------------------------------------
 st.divider()
 st.caption("Built with Streamlit • Powered by Claude 3.5 Sonnet")
-  
-
-
