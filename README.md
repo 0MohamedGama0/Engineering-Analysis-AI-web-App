@@ -132,16 +132,18 @@ openai>=1.0.0
 
 ### 🐞 Development Challenges & Solutions
 
-Problem,Solution
-Initial code used outdated direct model endpoints (:free suffix),Migrated to modern Hugging Face Inference Providers with OpenAI-compatible router
-"Vision model calls failing (wrong payload format, unsupported task)","Switched to openai Python client with base_url=""https://router.huggingface.co/v1"" and proper chat format with base64 data URI"
-"Text model errors (""model not supported for task text-generation"")",Used chat completion models only (Llama-3.1-8B-Instruct) via OpenAI-style messages
-Older models like BLIP/FLAN-T5/Mistral-7B unavailable or unreliable on free tier,Upgraded to current strong open models: Qwen2.5-VL-7B-Instruct (vision) and Meta-Llama-3.1-8B-Instruct (text)
-Local Ollama worked but incompatible with cloud deployment,Fully replaced with cloud-based Hugging Face Inference (no local dependencies)
-Rate limits / temporary model unavailability,"Added robust error handling, user feedback, and manual description fallback"
-UI confusion during errors,"Improved buttons, success/error messages, and layout for better UX"
+| Problem                                                                                          | Solution                                                                                                                                                      |
+|--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Initial code used outdated direct model endpoints (:free suffix)                                | Migrated to modern Hugging Face Inference Providers with OpenAI-compatible router                                                                           |
+| Vision model calls failing (wrong payload format, unsupported task)                             | Switched to OpenAI Python client with `base_url="https://router.huggingface.co/v1"` and proper chat format with base64 data URI                          |
+| Text model errors ("model not supported for task text-generation")                               | Used chat completion models only (Llama-3.1-8B-Instruct) via OpenAI-style messages                                                                         |
+| Older models like BLIP/FLAN-T5/Mistral-7B unavailable or unreliable on free tier               | Upgraded to current strong open models: Qwen2.5-VL-7B-Instruct (vision) and Meta-Llama-3.1-8B-Instruct (text)                                              |
+| Local Ollama worked but incompatible with cloud deployment                                       | Fully replaced with cloud-based Hugging Face Inference (no local dependencies)                                                                               |
+| Rate limits / temporary model unavailability                                                    | Added robust error handling, user feedback, and manual description fallback                                                                                 |
+| UI confusion during errors                                                                       | Improved buttons, success/error messages, and layout for better UX                                                                                         |
+    
 
-
+       
 ## Built with passion for engineering innovation 🚀
 Keep Moving Forward
 Student: Mohamed Gama
