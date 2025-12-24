@@ -141,12 +141,13 @@ openai>=1.0.0
 | Local Ollama worked but incompatible with cloud deployment                                       | Fully replaced with cloud-based Hugging Face Inference (no local dependencies)                                                                               |
 | Rate limits / temporary model unavailability                                                    | Added robust error handling, user feedback, and manual description fallback                                                                                 |
 | UI confusion during errors                                                                       | Improved buttons, success/error messages, and layout for better UX                                                                                         |
-    
 
-       
-## Built with passion for engineering innovation 🚀
-Keep Moving Forward
-Student: Mohamed Gama
-Course: Data Science / Large Language Models – UCAS
+
 ## 📄 License
 MIT License — free for academic, educational, and personal use.
+
+## Built with passion for engineering innovation 🚀
+Keep Moving Forward
+Student: Mohamed Gama _ UCAS
+
+
