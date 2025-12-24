@@ -109,24 +109,20 @@ streamlit run app.py
  - Go to https://share.streamlit.io
  - New app → Select your repository → Branch: main → Main file: app.py
  - In Advanced settings → Secrets → Add:textHF_API_KEY = "hf_your_actual_token_here
----
 
-## 📁 Project Structure
 
----
+##  📁 Project Structure
 
-engineering-analysis-ai-web-app/
-├── app.py                  # Main Streamlit application
-├── requirements.txt        # Dependencies
-├── README.md               # This file
-└── .streamlit/
-    └── secrets.toml        # API keys (local only – NOT committed to GitHub)
+     engineering-analysis-ai-web-app/
+      ├── app.py             # Main Streamlit application
+      ├── requirements.txt   # Dependencies
+      ├── README.md          # This file
+      └── .streamlit/
+          └── secrets.toml   # API keys (local only – NOT committed to GitHub)
 
-    
+
 
 ### 📦 Dependencies (requirements.txt)
-
-```bash
 
 streamlit
 pillow
@@ -134,10 +130,7 @@ openai>=1.0.0
 
 ---
 
-
-##  🐞 Development Challenges & Solutions
-
-```bash
+### 🐞 Development Challenges & Solutions
 
 Problem,Solution
 Initial code used outdated direct model endpoints (:free suffix),Migrated to modern Hugging Face Inference Providers with OpenAI-compatible router
