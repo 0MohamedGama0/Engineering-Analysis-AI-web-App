@@ -124,9 +124,9 @@ streamlit run app.py
 
 ### 📦 Dependencies (requirements.txt)
 
-streamlit
-pillow
-openai>=1.0.0
+   streamlit
+   pillow
+   openai>=1.0.0
 
 ---
 
@@ -146,8 +146,9 @@ openai>=1.0.0
 ## 📄 License
 MIT License — free for academic, educational, and personal use.
 
-## Built with passion for engineering innovation 🚀
-Keep Moving Forward
-Student: Mohamed Gama _ UCAS
+## Built with Passion for Innovative Engineers  🚀
+  Keep Moving Forward
+
+  Student: Mohamed Gama _ UCAS
 
 
