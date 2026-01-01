@@ -8,7 +8,7 @@
 
 A professional web application for **AI-powered engineering design analysis**, combining advanced **vision-language models** with structured LLM reasoning. This project was created as part of a **Data Science / Large Language Models course assignment** at the University of Chinese Academy of Sciences (UCAS), under the guidance of Prof.Luó 
 
-**Live Demo:** [https://engineering-analysis-ai.streamlit.app/](https://engineering-analysis-ai.streamlit.app/)
+**Live Demo:** [[https://engineering-analysis-ai.streamlit.app/](https://engineering-analysis-ai.streamlit.app/)](https://engineering-analysis-ai-app.streamlit.app/) 
 
 **GitHub Repository:** [https://github.com/0MohamedGama0/engineering-analysis-ai-web-app](https://github.com/0MohamedGama0/engineering-analysis-ai-web-app)
 
