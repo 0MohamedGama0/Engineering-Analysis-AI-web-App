@@ -10,7 +10,7 @@ A professional web application for **AI-powered engineering design analysis**, c
 
 **Live Demo:** [https://engineering-analysis-ai.streamlit.app/](https://engineering-analysis-ai.streamlit.app/)
 
-**GitHub Repository:** [https://github.com/0MohamedGama0/engineering-analysis-ai-web-app](https://github.com/0MohamedGama0/engineering-analysis-ai-web-app) (replace with your actual repo URL)
+**GitHub Repository:** [https://github.com/0MohamedGama0/engineering-analysis-ai-web-app](https://github.com/0MohamedGama0/engineering-analysis-ai-web-app)
 
 ---
 
